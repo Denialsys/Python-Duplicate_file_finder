@@ -13,7 +13,7 @@ def delete_file():
     selection = listbox.curselection()
     if selection:
         filename = listbox.get(selection[0])
-        # os.remove(filename)
+        os.remove(filename)
         print(f'Deleting {filename}')
         listbox.delete(selection)
 
@@ -28,9 +28,12 @@ def update_listbox():
     report_interval = .05
 
     if target_dir:
-        for root, dirs, filenames in os.walk(target_dir):
+        for main_dir, dirs, filenames in os.walk(target_dir):
             for filename in filenames:
-                path = os.path.join(root, filename)
+                if has_terminated:
+                    return
+
+                path = os.path.join(main_dir, filename)
                 hash_sha = hashlib.sha256()
                 with open(path, "rb") as f:
                     while True:
@@ -50,17 +53,18 @@ def update_listbox():
 
                 if time.time() - time_stamp > report_interval:
                     progress_label.config(text=f"Files scanned: {file_counter}")
-                    duplicate_label.config(text=f"Files scanned: {duplicate_counter}")
+                    duplicate_label.config(text=f"Duplicates found: {duplicate_counter}")
                     root.update()
-                    report_interval = time.time()
+                    time_stamp = time.time()
+
+        progress_label.config(text=f"Total files scanned: {file_counter}")
+        duplicate_label.config(text=f"Total Duplicates found: {duplicate_counter}")
 
         for hash_sha in files:
             if len(files[hash_sha]) > 1:
                 for duplicated_file in files[hash_sha]:
                     listbox.insert(tk.END, duplicated_file)
                 listbox.insert(tk.END, separator)
-        # for filename in os.listdir():
-        #     if os.path.isfile(filename):
 
 
 root = tk.Tk()
