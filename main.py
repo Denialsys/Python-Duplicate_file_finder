@@ -13,9 +13,10 @@ def delete_file():
     selection = listbox.curselection()
     if selection:
         filename = listbox.get(selection[0])
-        os.remove(filename)
-        print(f'Deleting {filename}')
         listbox.delete(selection)
+        if separator not in filename:
+            os.remove(filename)
+            print(f'Deleting {filename}')
 
 def update_listbox():
     listbox.delete(0, tk.END)
