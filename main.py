@@ -4,12 +4,17 @@ import hashlib
 import time
 
 separator = '----------------------'
+has_terminated = False
+
+def terminate():
+    root.destroy()
 
 def delete_file():
     selection = listbox.curselection()
     if selection:
         filename = listbox.get(selection[0])
         # os.remove(filename)
+        print(f'Deleting {filename}')
         listbox.delete(selection)
 
 def update_listbox():
@@ -26,9 +31,14 @@ def update_listbox():
         for root, dirs, filenames in os.walk(target_dir):
             for filename in filenames:
                 path = os.path.join(root, filename)
-
+                hash_sha = hashlib.sha256()
                 with open(path, "rb") as f:
-                    file_hash = hashlib.md5(f.read(1024)).hexdigest()
+                    while True:
+                        chunk = f.read(1024)
+                        if not chunk:
+                            break
+                        hash_sha.update(chunk)
+                file_hash = hash_sha.digest()
 
                 if file_hash in files:
                     files[file_hash].append(path)
@@ -38,14 +48,15 @@ def update_listbox():
 
                 file_counter += 1
 
-                # if time.time() - time_stamp > report_interval:
-                #     progress_label.config(text=f"{progress}%")
-                #     root.update()
-                #     report_interval = time.time()
-        print(files)
-        for hash in files:
-            if len(files[hash]) > 1:
-                for duplicated_file in files[hash]:
+                if time.time() - time_stamp > report_interval:
+                    progress_label.config(text=f"Files scanned: {file_counter}")
+                    duplicate_label.config(text=f"Files scanned: {duplicate_counter}")
+                    root.update()
+                    report_interval = time.time()
+
+        for hash_sha in files:
+            if len(files[hash_sha]) > 1:
+                for duplicated_file in files[hash_sha]:
                     listbox.insert(tk.END, duplicated_file)
                 listbox.insert(tk.END, separator)
         # for filename in os.listdir():
@@ -71,13 +82,48 @@ label.pack(side=tk.TOP, padx=10, pady=5)
 entry = tk.Entry(root)
 entry.pack(side=tk.TOP, padx=10, pady=5)
 
-update_button = tk.Button(root, text="Update List", command=update_listbox)
-update_button.pack(side=tk.TOP, padx=10, pady=5)
+update_button = tk.Button(
+    root,
+    text="Update List",
+    command=update_listbox,
+    height=1,
+    width=10
+)
+update_button.pack(
+    side=tk.TOP,
+    padx=10,
+    pady=10
+)
 
-delete_button = tk.Button(root, text="Delete File", command=delete_file)
-delete_button.pack(side=tk.TOP, padx=10, pady=5)
+progress_label = tk.Label(root, text=f"Files scanned: 0")
+progress_label.pack(pady=5)
+
+duplicate_label = tk.Label(root, text=f"Duplicates found: 0")
+duplicate_label.pack(pady=5)
+
+delete_button = tk.Button(
+    root,
+    text="Delete File",
+    command=delete_file,
+    height=1,
+    width=10,
+)
+delete_button.pack(
+    side=tk.TOP,
+    padx=10,
+    pady=10
+)
+
+close_button = tk.Button(
+    root,
+    text="Close",
+    command=root.destroy,
+    height=1,
+    width=10
+)
+
+close_button.pack(pady=20)
 
 update_listbox()
-
 root.bind("<Delete>", lambda event: delete_file())
 root.mainloop()
