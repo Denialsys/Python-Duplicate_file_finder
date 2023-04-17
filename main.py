@@ -49,6 +49,9 @@ def update_listbox():
                     root.update()
                     time_stamp = time.time()
 
+        file_count_label.config(text=f"Files Detected: {file_detection}")
+        root.update()
+
     # Start hashing and finding the duplicates
     if target_dir:
         for main_dir, dirs, filenames in os.walk(target_dir):
@@ -85,6 +88,7 @@ def update_listbox():
 
         progress_label.config(text=f"Total files scanned: {file_counter}")
         duplicate_label.config(text=f"Total Duplicates found: {duplicate_counter}")
+        root.update()
 
         for hash_sha in files:
             if len(files[hash_sha]) > 1:
