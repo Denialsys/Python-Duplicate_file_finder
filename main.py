@@ -24,10 +24,27 @@ def update_listbox():
     files = {}
     duplicate_counter = 0
     file_counter = 0
-
+    file_detection = 0
     time_stamp = time.time()
-    report_interval = .05
+    report_interval = .1
 
+    # Count first the files to be hashed
+    if target_dir:
+        for main_dir, dirs, filenames in os.walk(target_dir):
+            for filename in filenames:
+                if has_terminated:
+                    return
+
+                path = os.path.join(main_dir, filename)
+                if os.path.isfile(path):
+                    file_detection += 1
+
+                if time.time() - time_stamp > report_interval:
+                    file_count_label.config(text=f"Files Detected: {file_detection}")
+                    root.update()
+                    time_stamp = time.time()
+
+    # Start hashing and finding the duplicates
     if target_dir:
         for main_dir, dirs, filenames in os.walk(target_dir):
             for filename in filenames:
@@ -99,6 +116,8 @@ update_button.pack(
     padx=10,
     pady=10
 )
+file_count_label = tk.Label(root, text=f"Files Detected: 0")
+file_count_label.pack(pady=5)
 
 progress_label = tk.Label(root, text=f"Files scanned: 0")
 progress_label.pack(pady=5)
