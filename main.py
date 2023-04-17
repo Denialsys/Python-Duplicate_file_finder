@@ -21,6 +21,7 @@ def delete_file():
 def update_listbox():
     listbox.delete(0, tk.END)
     target_dir = entry.get()
+    ignore_dirs = ignore_entry.get()
     files = {}
     duplicate_counter = 0
     file_counter = 0
@@ -28,9 +29,13 @@ def update_listbox():
     time_stamp = time.time()
     report_interval = .1
 
+    time_stamp2 = time.time()
     # Count first the files to be hashed
     if target_dir:
         for main_dir, dirs, filenames in os.walk(target_dir):
+            if ignore_dirs and ignore_dirs in main_dir:
+                continue
+
             for filename in filenames:
                 if has_terminated:
                     return
@@ -47,19 +52,22 @@ def update_listbox():
     # Start hashing and finding the duplicates
     if target_dir:
         for main_dir, dirs, filenames in os.walk(target_dir):
+            if ignore_dirs and ignore_dirs in main_dir:
+                continue
+
             for filename in filenames:
+
                 if has_terminated:
                     return
 
                 path = os.path.join(main_dir, filename)
-                hash_sha = hashlib.sha256()
+
                 with open(path, "rb") as f:
-                    while True:
-                        chunk = f.read(1024)
-                        if not chunk:
-                            break
-                        hash_sha.update(chunk)
-                file_hash = hash_sha.digest()
+
+                    file_hash = hashlib.md5()
+                    while chunk := f.read(4096):
+                        file_hash.update(chunk)
+                    file_hash = file_hash.hexdigest()
 
                 if file_hash in files:
                     files[file_hash].append(path)
@@ -84,6 +92,8 @@ def update_listbox():
                     listbox.insert(tk.END, duplicated_file)
                 listbox.insert(tk.END, separator)
 
+    print(time.time() - time_stamp2)
+
 
 root = tk.Tk()
 root.geometry("1000x700")
@@ -104,6 +114,12 @@ label.pack(side=tk.TOP, padx=10, pady=5)
 entry = tk.Entry(root)
 entry.pack(side=tk.TOP, padx=10, pady=5)
 
+ignore_label = tk.Label(root, text="Directory to ignore:")
+ignore_label.pack(side=tk.TOP, padx=10, pady=5)
+
+ignore_entry = tk.Entry(root)
+ignore_entry.pack(side=tk.TOP, padx=10, pady=5)
+
 update_button = tk.Button(
     root,
     text="Update List",
@@ -117,13 +133,13 @@ update_button.pack(
     pady=10
 )
 file_count_label = tk.Label(root, text=f"Files Detected: 0")
-file_count_label.pack(pady=5)
+file_count_label.pack(pady=1)
 
 progress_label = tk.Label(root, text=f"Files scanned: 0")
-progress_label.pack(pady=5)
+progress_label.pack(pady=1)
 
 duplicate_label = tk.Label(root, text=f"Duplicates found: 0")
-duplicate_label.pack(pady=5)
+duplicate_label.pack(pady=1)
 
 delete_button = tk.Button(
     root,
